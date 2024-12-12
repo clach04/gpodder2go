@@ -139,33 +139,72 @@ func (s *SQLite) RetrieveDevices(username string) ([]Device, error) {
 }
 
 func (l *SQLite) AddEpisodeActionHistory(username string, e EpisodeAction) error {
-
 	db := l.db
 	tx, err := db.Begin()
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
 
-	deviceIds := e.Devices
-
-	for _, deviceId := range deviceIds {
-		//	deviceId, err := l.GetDeviceIdFromName(v, username)
-		//	if err != nil {
-		//		return err
-		//	}
-
-		_, err = tx.Exec("INSERT INTO episode_actions(device_id, podcast, episode, action, position, started, total, timestamp) VALUES (?,?,?,?,?,?,?,?)", deviceId, e.Podcast, e.Episode, e.Action, e.Position, e.Started, e.Total, e.Timestamp.Unix())
-		if err != nil {
-			return err
-		}
+	_, err = tx.Exec("INSERT INTO episode_actions(device_id, podcast, episode, action, position, started, total, timestamp) VALUES (?,?,?,?,?,?,?,?)", e.Device, e.Podcast, e.Episode, e.Action, e.Position, e.Started, e.Total, e.Timestamp.Unix())
+	if err != nil {
+		tx.Rollback()
+		return err
 	}
 	tx.Commit()
 	return nil
 }
 
 func (l *SQLite) RetrieveEpisodeActionHistory(username string, deviceId string, since time.Time) ([]EpisodeAction, error) {
-	return []EpisodeAction{}, nil
+	db := l.db
+
+	actions := []EpisodeAction{}
+
+	query := "SELECT a.podcast, a.episode, a.device_id, a.action, a.position, a.started, a.total, a.timestamp"
+	query = query + " FROM episode_actions as a, devices as d, users as u"
+	query = query + " WHERE a.device_id = d.name AND d.user_id = u.id AND u.username = ?"
+	var args []interface{}
+	args = append(args, username)
+	if !since.IsZero() {
+		query = query + " AND a.timestamp > ?"
+		args = append(args, since)
+	}
+	query = query + " ORDER BY a.id"
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		a := EpisodeAction{}
+		var ts string
+		err := rows.Scan(
+			&a.Podcast,
+			&a.Episode,
+			&a.Device,
+			&a.Action,
+			&a.Position,
+			&a.Started,
+			&a.Total,
+			&ts,
+		)
+		if err != nil {
+			log.Printf("error scanning: %#v", err)
+			continue
+		}
+		timestamp := CustomTimestamp{}
+		g, err := strconv.ParseInt(ts, 10, 64)
+		if err != nil {
+			log.Printf("error scanning: %#v", err)
+			continue
+		}
+		timestamp.Time = time.Unix(g, 0)
+		a.Timestamp = timestamp
+
+		actions = append(actions, a)
+
+	}
+
+	return actions, nil
 }
 
 // GetDevicesFromUsername returns a list of device names that belongs to

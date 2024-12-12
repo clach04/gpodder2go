@@ -14,6 +14,7 @@ require (
 	github.com/spf13/cobra v1.4.0
 	k8s.io/utils v0.0.0-20210930125809-cb0fa318a74b
 	modernc.org/sqlite v1.26.0
+	github.com/relvacode/iso8601 v1.3.0
 )
 
 require (
