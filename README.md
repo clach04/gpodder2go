@@ -65,9 +65,16 @@ $ gpodder2go serve --no-auth
 
 Alternatively, you can switch to use [Antennapod](https://antennapod.org/) which has implemented the login spec which gpodder2go currently supports.
 
-### Supports
+### Supported Clients
 
-- [Antennapod](https://antennapod.org/)
+#### [Antennapod](https://antennapod.org/)
+
+These features are all working with Antennapod:
+    - Authentication API
+    - Subscriptions API
+    - Episode Actions API
+    - Device API
+    - Device Synchronization API
 
 ### Development
 

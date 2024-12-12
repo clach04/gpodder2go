@@ -140,17 +140,11 @@ func (s *SQLite) RetrieveDevices(username string) ([]Device, error) {
 
 func (l *SQLite) AddEpisodeActionHistory(username string, e EpisodeAction) error {
 	db := l.db
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
 
-	_, err = tx.Exec("INSERT INTO episode_actions(device_id, podcast, episode, action, position, started, total, timestamp) VALUES (?,?,?,?,?,?,?,?)", e.Device, e.Podcast, e.Episode, e.Action, e.Position, e.Started, e.Total, e.Timestamp.Unix())
+	_, err := db.Exec("INSERT INTO episode_actions(device_id, podcast, episode, action, position, started, total, timestamp) VALUES (?,?,?,?,?,?,?,?)", e.Device, e.Podcast, e.Episode, e.Action, e.Position, e.Started, e.Total, e.Timestamp.Unix())
 	if err != nil {
-		tx.Rollback()
 		return err
 	}
-	tx.Commit()
 	return nil
 }
 
@@ -161,14 +155,8 @@ func (l *SQLite) RetrieveEpisodeActionHistory(username string, deviceId string, 
 
 	query := "SELECT a.podcast, a.episode, a.device_id, a.action, a.position, a.started, a.total, a.timestamp"
 	query = query + " FROM episode_actions as a, devices as d, users as u"
-	query = query + " WHERE a.device_id = d.name AND d.user_id = u.id AND u.username = ?"
-	var args []interface{}
-	args = append(args, username)
-	if !since.IsZero() {
-		query = query + " AND a.timestamp > ?"
-		args = append(args, since)
-	}
-	query = query + " ORDER BY a.id"
+	query = query + " WHERE a.device_id = d.name AND d.user_id = u.id AND u.username = ? ORDER BY a.id"
+	args := []interface{}{username}
 	rows, err := db.Query(query, args...)
 	if err != nil {
 		return nil, err
@@ -200,8 +188,20 @@ func (l *SQLite) RetrieveEpisodeActionHistory(username string, deviceId string, 
 		timestamp.Time = time.Unix(g, 0)
 		a.Timestamp = timestamp
 
-		actions = append(actions, a)
+		// For some reason, the timestamp for episode actions has been stored as
+		// an integer, but in a field of type varchar(255). (that's why you see
+		// the ParseInt call above). So we cannot use a DB query to sort or
+		// filter by timestamp, because the DB would sort the integers
+		// alphabetically. Someone should probably fix that by making a
+		// migration to change the timestamp type in the DB, and then let the DB
+		// handle the filtering.
+		if !since.IsZero() {
+			if a.Timestamp.Before(since) {
+				continue
+			}
+		}
 
+		actions = append(actions, a)
 	}
 
 	return actions, nil
