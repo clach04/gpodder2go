@@ -117,7 +117,7 @@ $ docker run -d \
 ghcr.io/oxtyped/gpodder2go:main
 ```
 
-With docker compose:
+With docker compose (see below for locally built image):
 
 ```yaml
 version: '3'
@@ -144,25 +144,47 @@ $ docker exec --it gpodder2go /gpodder2go ...
 Build with:
 
 ```
-$ git clone https://github.com/oxtyped/gpodder2go
+$ git clone https://github.com/clach04/gpodder2go
 $ cd gpodder2go
-$ docker build -t oxtyped/gpodder2go .
+$ docker build -t clach04/gpodder2go .
 ```
 
 Run with:
 
 ```
-$ docker run --rm -it -p 3005:3005 oxtyped/gpodder2go
+$ docker run --rm -it -p 3005:3005 clach04/gpodder2go
 ```
 
 For persistent data, you can map `/data` as a volume:
 
 ```
-$ docker run --rm -it -v /gpodder2go_data:/data -p 3005:3005 oxtyped/gpodder2go
+$ docker run --rm -it -v /gpodder2go_data:/data -p 3005:3005 clach04/gpodder2go
 ```
 
 To add a user:
 
 ```
-$ docker run --rm -it -v /gpodder2go_data:/data oxtyped/gpodder2go /gpodder2go accounts create <username> --email="<email>" --name="<display_name>" --password="<password>"
+$ docker run --rm -it -v /gpodder2go_data:/data clach04/gpodder2go /gpodder2go accounts create <username> --email="<email>" --name="<display_name>" --password="<password>"
+```
+
+With docker compose / docker-compose using locally built image:
+
+```yaml
+# NOTE VERIFIER_SECRET_KEY -- looks like this ends up in file system as a file 41 bytes when using docker, no need to manually set
+# atennapod handshake fail - tls issue - use http://192.168.11.100:3005 instead and be aware or encrypted warning
+
+version: '3'
+services:
+  gpodder2go:
+    image: clach04/gpodder2go
+    ports:
+      - 3005:3005
+    environment:
+      #- NO_AUTH=<true or false>
+      # only needed for old gpodder client, atennapod does not need this
+      #- NO_AUTH=true
+      - NO_AUTH=false
+    volumes:
+      - /EDIT/ME/your/path/here/gpodder2go/data:/data
+    restart: unless-stopped
 ```
