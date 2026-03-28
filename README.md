@@ -77,6 +77,10 @@ These features are all working with Antennapod:
   - Device API
   - Device Synchronization API
 
+NOTE when using Antennapod to set up a sync provider, choose Gpodder.net (first option, NOT the second for GPodder Sync).
+
+If you do NOT have TLS/https setup, explictly enter in http. Example: `http://127.0.0.1:3005`.
+
 To start using with two devices, especially if you want to transfer state
 from old_phone to new_phone:
 
