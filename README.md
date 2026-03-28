@@ -88,7 +88,7 @@ from old_phone to new_phone:
 2. Log in with new_phone, but select old_phone as the device. Subscriptions will sync.
 3. Log out with new_phone.
 4. Log in with new_phone and create a new device ID for it.
-5. Use the API (such as with curl) to [create a sync group](https://gpoddernet.readthedocs.io/en/latest/api/reference/sync.html#device-synchronization-api) with both devices.
+5. Use the API (such as with curl) to [create a sync group](https://gpoddernet.readthedocs.io/en/latest/api/reference/sync.html#device-synchronization-api) with both devices. gpodder_set_all_to_sync.py in this repo can be used to set all devices to synchronize (requires Python and the Requests package).
 
 After that, the episode state will sync between them, and a new subscription on
 either one will propagate to the other.
